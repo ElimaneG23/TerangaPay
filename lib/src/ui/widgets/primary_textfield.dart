@@ -8,6 +8,7 @@ class PrimaryTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextEditingController? controller;
   final Widget? suffix;
+  final LinearGradient? gradient; // <- nouveau paramètre
 
   const PrimaryTextField({
     super.key,
@@ -17,6 +18,7 @@ class PrimaryTextField extends StatelessWidget {
     this.keyboardType,
     this.controller,
     this.suffix,
+    this.gradient, // <- ajouter ici
   });
 
   @override
@@ -36,33 +38,38 @@ class PrimaryTextField extends StatelessWidget {
           const SizedBox(height: 6),
         ],
 
+        // Gradient autour du champ
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.primary, // première couleur du gradient
-              width: 1.2,
-            ),
+            gradient: gradient, // <- applique le gradient ici
           ),
-          child: TextField(
-            controller: controller,
-            obscureText: obscure,
-            keyboardType: keyboardType,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.text,
+          child: Container(
+            margin: const EdgeInsets.all(1.5), // simulate border
+            decoration: BoxDecoration(
+              color: AppColors.white, // fond blanc à l'intérieur
+              borderRadius: BorderRadius.circular(10),
             ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: TextStyle(
-                color: AppColors.text.withOpacity(0.5),
+            child: TextField(
+              controller: controller,
+              obscureText: obscure,
+              keyboardType: keyboardType,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.text,
               ),
-              suffixIcon: suffix,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 14,
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: TextStyle(
+                  color: AppColors.text.withOpacity(0.5),
+                ),
+                suffixIcon: suffix,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+                border: InputBorder.none,
               ),
-              border: InputBorder.none,
             ),
           ),
         ),
@@ -70,5 +77,3 @@ class PrimaryTextField extends StatelessWidget {
     );
   }
 }
-
-
