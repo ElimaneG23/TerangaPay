@@ -13,10 +13,10 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _nom     = TextEditingController();
-  final _prenom  = TextEditingController();
-  final _email   = TextEditingController();
-  final _pin     = TextEditingController();
+  final _nom = TextEditingController();
+  final _prenom = TextEditingController();
+  final _email = TextEditingController();
+  final _pin = TextEditingController();
   final _pinConf = TextEditingController();
 
   // Méthode de validation
@@ -45,7 +45,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
     // Vérifier que la confirmation PIN est identique et uniquement des chiffres
     if (!RegExp(r'^[0-9]+$').hasMatch(_pinConf.text)) {
-      _showSnackBar('La confirmation du PIN doit contenir uniquement des chiffres');
+      _showSnackBar(
+        'La confirmation du PIN doit contenir uniquement des chiffres',
+      );
       return false;
     }
 
@@ -60,9 +62,45 @@ class _RegisterPageState extends State<RegisterPage> {
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        // flottant au lieu de coller en bas
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        // espace autour
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        duration: const Duration(seconds: 3),
+        backgroundColor: Colors.transparent,
+        // on utilise un Container pour le style
+        elevation: 0,
+        content: Container(
+          decoration: BoxDecoration(
+            color: Colors.red.shade700, // dégradé rouge-orange
+
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 6,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white), // icône
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -149,7 +187,8 @@ class _RegisterPageState extends State<RegisterPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const PhoneVerifyPage()),
+                        builder: (_) => const PhoneVerifyPage(),
+                      ),
                     );
                   }
                 },

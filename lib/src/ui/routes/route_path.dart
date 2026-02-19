@@ -1,2 +1,7 @@
 const String splash = '/';
 const String onboarding = '/onboarding_page';
+const String login = '/login_page';
+const String otp = '/otp_page';
+const String dashboard = '/dashboard_page';
+const String phoneVerifyPage = '/phone_verify_page';
+const String registerPage = '/register_page';

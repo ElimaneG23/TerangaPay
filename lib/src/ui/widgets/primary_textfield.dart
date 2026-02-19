@@ -8,7 +8,8 @@ class PrimaryTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextEditingController? controller;
   final Widget? suffix;
-  final LinearGradient? gradient; // <- nouveau paramètre
+  final LinearGradient? gradient; // <- gradient
+  final void Function(String)? onChanged; // <- callback ajouté
 
   const PrimaryTextField({
     super.key,
@@ -18,7 +19,8 @@ class PrimaryTextField extends StatelessWidget {
     this.keyboardType,
     this.controller,
     this.suffix,
-    this.gradient, // <- ajouter ici
+    this.gradient,
+    this.onChanged, // <- assigné ici
   });
 
   @override
@@ -42,12 +44,12 @@ class PrimaryTextField extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            gradient: gradient, // <- applique le gradient ici
+            gradient: gradient,
           ),
           child: Container(
             margin: const EdgeInsets.all(1.5), // simulate border
             decoration: BoxDecoration(
-              color: AppColors.white, // fond blanc à l'intérieur
+              color: AppColors.white,
               borderRadius: BorderRadius.circular(10),
             ),
             child: TextField(
@@ -58,6 +60,7 @@ class PrimaryTextField extends StatelessWidget {
                 fontSize: 14,
                 color: AppColors.text,
               ),
+              onChanged: onChanged, // <-- ici
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: TextStyle(
