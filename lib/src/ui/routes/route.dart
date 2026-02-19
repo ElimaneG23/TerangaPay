@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:terangapay/src/ui/routes/route_path.dart';
+import 'package:terangapay/src/ui/screens/onboarding_page.dart';
 
 import '../screens/splash_screen.dart';
 
@@ -8,6 +9,8 @@ class Routers {
     switch (settings.name) {
     case splash:
     return MaterialPageRoute(builder: (_) => const SplashScreen());
+    case onboarding:
+    return MaterialPageRoute(builder: (_) => const OnboardingPage());
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
