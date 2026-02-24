@@ -1,36 +1,61 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:terangapay/models/user_model.dart';
 import '../../../app_theme.dart';
 import '../../utiles/myAssets/image_assets.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/primary_textfield.dart';
 import 'dashbord_page.dart';
 import 'register_page.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
   final _phone = TextEditingController();
-  final _pin   = TextEditingController();
+  final _pin = TextEditingController();
   bool _obscure = true;
 
-  void _login() {
+  /// Charger les utilisateurs depuis le JSON
+  Future<List<UserModel>> _loadUsers() async {
+    final String response =
+    await rootBundle.loadString('assets/data/users.json');
+
+    final List<dynamic> data = json.decode(response);
+
+    return data.map((json) => UserModel.fromJson(json)).toList();
+  }
+
+  /// Fonction login
+  void _login() async {
     if (_phone.text.isEmpty) {
       _showSnackBar('Veuillez entrer votre numéro de téléphone');
       return;
     }
+
     if (_pin.text.isEmpty) {
       _showSnackBar('Veuillez entrer votre code PIN');
       return;
     }
-    // ici tu peux ajouter la logique de connexion
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const DashbordPage()),
-          (_) => false,
-    );
+
+    final users = await _loadUsers();
+
+    try {
+      final user = users.firstWhere(
+            (u) =>
+        u.telephone == _phone.text.trim() &&
+            u.pin == _pin.text.trim(),
+      );
+
+
+    } catch (e) {
+      _showSnackBar("Numéro ou PIN incorrect");
+    }
   }
 
   void _showSnackBar(String message) {
@@ -40,7 +65,9 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: AppColors.red,
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
@@ -56,8 +83,12 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
+
+              /// Logo
               Center(child: Image.asset(ImagesAssets.terangaPay)),
+
               const SizedBox(height: 36),
+
               const Text(
                 'CONNEXION',
                 style: TextStyle(
@@ -67,9 +98,10 @@ class _LoginPageState extends State<LoginPage> {
                   letterSpacing: 1,
                 ),
               ),
+
               const SizedBox(height: 28),
 
-              // Numéro de téléphone
+              /// Téléphone
               PrimaryTextField(
                 label: 'Numéro de téléphone',
                 hint: 'Entrez votre numéro',
@@ -77,9 +109,10 @@ class _LoginPageState extends State<LoginPage> {
                 keyboardType: TextInputType.phone,
                 gradient: AppTheme.primaryGradient,
               ),
+
               const SizedBox(height: 16),
 
-              // Code PIN
+              /// PIN
               PrimaryTextField(
                 label: 'Code PIN',
                 hint: 'Entrez votre code PIN',
@@ -90,12 +123,15 @@ class _LoginPageState extends State<LoginPage> {
                 suffix: GestureDetector(
                   onTap: () => setState(() => _obscure = !_obscure),
                   child: Icon(
-                    _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    _obscure
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     color: AppColors.sub,
                     size: 20,
                   ),
                 ),
               ),
+
               const SizedBox(height: 8),
 
               Align(
@@ -112,37 +148,47 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 16),
 
-              // Bouton connexion
+              /// Bouton connexion
               PrimaryButton(
                 label: 'Se Connecter',
                 onTap: _login,
               ),
+
               const SizedBox(height: 24),
 
+              /// Lien inscription
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Pas encore de compte ? ',
-                      style: TextStyle(fontSize: 13, color: AppColors.sub)),
+                  const Text(
+                    'Pas encore de compte ? ',
+                    style:
+                    TextStyle(fontSize: 13, color: AppColors.sub),
+                  ),
                   GestureDetector(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const RegisterPage()),
+                      MaterialPageRoute(
+                          builder: (_) => const RegisterPage()),
                     ),
-                    child: const Text('S\'inscrire',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.green,
-                          fontWeight: FontWeight.w600,
-                        )),
+                    child: const Text(
+                      'S\'inscrire',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.green,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 24),
 
-              // Social icons
+              /// Social Icons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
@@ -161,7 +207,9 @@ class _LoginPageState extends State<LoginPage> {
 
 class _SocialBtn extends StatelessWidget {
   final IconData icon;
+
   const _SocialBtn({required this.icon});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -171,7 +219,11 @@ class _SocialBtn extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(icon, color: AppColors.sub, size: 24),
+      child: Icon(
+        icon,
+        color: AppColors.sub,
+        size: 24,
+      ),
     );
   }
 }

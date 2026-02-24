@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "nom": "Gueye",
+    "prenom": "Baye Elimane",
+    "telephone": "771234567",
+    "pin": "1234",
+    "solde": 150000
+  },
+  {
+    "id": 2,
+    "nom": "Diop",
+    "prenom": "Aminata",
+    "telephone": "781112233",
+    "pin": "0000",
+    "solde": 85000
+  }
+]
