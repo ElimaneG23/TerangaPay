@@ -18,9 +18,9 @@ class Routers {
     case registerPage:
     return MaterialPageRoute(builder: (_) => const RegisterPage());
       case phoneVerifyPage:
-        return MaterialPageRoute(builder: (_) => const PhoneVerifyPage());
+        return MaterialPageRoute(builder: (_) => const PhoneVerifyPage(nom: '', prenom: '', email: '', ));
       case otp:
-        return MaterialPageRoute(builder: (_) => const OtpPage());
+        return MaterialPageRoute(builder: (_) => const OtpPage(nom: '', prenom: '', email: '', telephone: ''));
       case login:
         return MaterialPageRoute(builder: (_) => const LoginPage());
       default:

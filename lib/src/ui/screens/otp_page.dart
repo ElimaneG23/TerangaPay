@@ -1,19 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:terangapay/src/ui/widgets/primary_button.dart';
 import '../../../app_theme.dart';
 import '../../utiles/myAssets/image_assets.dart';
-import 'login_page.dart';
+// ✅ Import direct vers Dashboard avec les données utilisateur
+import 'dashbord_page.dart' show DashboardPage, User;
 
 class OtpPage extends StatefulWidget {
-  const OtpPage({super.key});
+  // ✅ Données reçues de PhoneVerifyPage → RegisterPage
+  final String nom;
+  final String prenom;
+  final String email;
+  final String telephone;
+
+  const OtpPage({
+    super.key,
+    required this.nom,
+    required this.prenom,
+    required this.email,
+    required this.telephone,
+  });
+
   @override
   State<OtpPage> createState() => _OtpPageState();
 }
 
 class _OtpPageState extends State<OtpPage> {
   final List<TextEditingController> _controllers =
-  List.generate(4, (_) => TextEditingController());
+      List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+
+  int _resendSeconds = 60;
+  bool _canResend = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startResendTimer();
+  }
 
   @override
   void dispose() {
@@ -22,20 +46,36 @@ class _OtpPageState extends State<OtpPage> {
     super.dispose();
   }
 
+  void _startResendTimer() async {
+    for (int i = 60; i >= 0; i--) {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+      setState(() {
+        _resendSeconds = i;
+        _canResend = i == 0;
+      });
+    }
+  }
+
   String get _otpCode => _controllers.map((c) => c.text).join();
 
   void _onChanged(String val, int index) {
-    if (val.isNotEmpty && val.length > 1) {
-      // garder seulement le premier caractère
-      _controllers[index].text = val[0];
+    // Gestion du collage
+    if (val.length > 1) {
+      final digits = val.replaceAll(RegExp(r'[^0-9]'), '');
+      for (int i = 0; i < 4 && i < digits.length; i++) {
+        _controllers[i].text = digits[i];
+      }
+      _focusNodes[3].requestFocus();
+      setState(() {});
+      return;
     }
     if (val.isNotEmpty && index < 3) {
-      _focusNodes[index + 1].requestFocus(); // passer à la case suivante
+      _focusNodes[index + 1].requestFocus();
+    } else if (val.isEmpty && index > 0) {
+      _focusNodes[index - 1].requestFocus();
     }
-    if (val.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus(); // revenir en arrière si backspace
-    }
-    setState(() {}); // pour mettre à jour le design si besoin
+    setState(() {});
   }
 
   void _confirm() {
@@ -44,15 +84,27 @@ class _OtpPageState extends State<OtpPage> {
         SnackBar(
           content: const Text('Veuillez entrer le code à 4 chiffres'),
           backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
     }
 
+    // ✅ Navigation vers Dashboard avec les vraies données utilisateur
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-          (_) => false,
+      MaterialPageRoute(
+        builder: (_) => DashboardPage(
+          currentUser: User(
+            prenom:    widget.prenom,
+            nom:       widget.nom,
+            telephone: widget.telephone,
+            solde:     0, // TODO: récupérer depuis l'API
+          ),
+        ),
+      ),
+      (_) => false,
     );
   }
 
@@ -68,6 +120,7 @@ class _OtpPageState extends State<OtpPage> {
             children: [
               Image.asset(ImagesAssets.terangaPay),
               const SizedBox(height: 28),
+
               const Text(
                 'Entrez le code envoyé',
                 style: TextStyle(
@@ -77,70 +130,94 @@ class _OtpPageState extends State<OtpPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Un code a été envoyé à votre numéro de téléphone',
-                style: TextStyle(fontSize: 13, color: AppColors.sub, height: 1.5),
+              // ✅ Affiche le numéro réel
+              Text(
+                'Un code a été envoyé au +221 ${widget.telephone}',
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.sub, height: 1.5),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 36),
 
-              // OTP cases
+              // ── Cases OTP ──
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (i) {
+                  final isFilled = _controllers[i].text.isNotEmpty;
                   return Container(
-                    width: 56,
-                    height: 60,
+                    width: 60, height: 64,
                     margin: const EdgeInsets.symmetric(horizontal: 8),
-                    child: TextField(
-                      controller: _controllers[i],
-                      focusNode: _focusNodes[i],
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      maxLength: 1,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.green,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: isFilled ? AppTheme.primaryGradient : null,
+                      border: isFilled
+                          ? null
+                          : Border.all(color: AppColors.border, width: 1.5),
+                    ),
+                    child: Container(
+                      margin: isFilled ? const EdgeInsets.all(1.5) : EdgeInsets.zero,
+                      decoration: BoxDecoration(
+                        color: isFilled ? AppColors.greenLight : AppColors.bg,
+                        borderRadius: BorderRadius.circular(isFilled ? 12 : 14),
                       ),
-                      decoration: InputDecoration(
-                        counterText: '',
-                        filled: true,
-                        fillColor: _controllers[i].text.isEmpty
-                            ? AppColors.bg
-                            : AppColors.greenLight,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: _controllers[i].text.isEmpty
-                                ? AppColors.border
-                                : AppColors.green,
-                            width: _controllers[i].text.isEmpty ? 1 : 1.5,
-                          ),
+                      child: TextField(
+                        controller: _controllers[i],
+                        focusNode: _focusNodes[i],
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: isFilled ? AppColors.greenDark : AppColors.text,
                         ),
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          border:             InputBorder.none,
+                          enabledBorder:      InputBorder.none,
+                          focusedBorder:      InputBorder.none,
+                        ),
+                        onChanged: (val) => _onChanged(val, i),
                       ),
-                      onChanged: (val) => _onChanged(val, i),
                     ),
                   );
                 }),
               ),
-              const SizedBox(height: 24),
 
-              PrimaryButton(
-                label: 'Confirmer',
-                onTap: _confirm,
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 32),
+
+              PrimaryButton(label: 'Confirmer', onTap: _confirm),
+
+              const SizedBox(height: 16),
+
               Center(
-                child: TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    'Renvoyer le code',
-                    style: TextStyle(
-                        color: AppColors.green,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
+                child: _canResend
+                    ? GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _canResend = false;
+                            _resendSeconds = 60;
+                          });
+                          _startResendTimer();
+                        },
+                        child: ShaderMask(
+                          shaderCallback: (b) =>
+                              AppTheme.primaryGradient.createShader(b),
+                          child: const Text(
+                            'Renvoyer le code',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'Renvoyer dans $_resendSeconds s',
+                        style: const TextStyle(
+                            fontSize: 13, color: AppColors.sub),
+                      ),
               ),
             ],
           ),
