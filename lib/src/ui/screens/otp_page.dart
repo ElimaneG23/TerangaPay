@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:terangapay/models/user_model.dart';
 import 'package:terangapay/src/ui/widgets/primary_button.dart';
 import '../../../app_theme.dart';
 import '../../utiles/myAssets/image_assets.dart';
-// ✅ Import direct vers Dashboard avec les données utilisateur
-import 'dashbord_page.dart' show DashboardPage, User;
+import 'dashbord_page.dart'; // DashboardPage
 
 class OtpPage extends StatefulWidget {
-  // ✅ Données reçues de PhoneVerifyPage → RegisterPage
   final String nom;
   final String prenom;
-  final String email;
+  final String? email; // email optionnel
   final String telephone;
 
   const OtpPage({
     super.key,
     required this.nom,
     required this.prenom,
-    required this.email,
+    this.email,
     required this.telephone,
   });
 
@@ -27,7 +26,7 @@ class OtpPage extends StatefulWidget {
 
 class _OtpPageState extends State<OtpPage> {
   final List<TextEditingController> _controllers =
-      List.generate(4, (_) => TextEditingController());
+  List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
   int _resendSeconds = 60;
@@ -60,7 +59,6 @@ class _OtpPageState extends State<OtpPage> {
   String get _otpCode => _controllers.map((c) => c.text).join();
 
   void _onChanged(String val, int index) {
-    // Gestion du collage
     if (val.length > 1) {
       final digits = val.replaceAll(RegExp(r'[^0-9]'), '');
       for (int i = 0; i < 4 && i < digits.length; i++) {
@@ -91,20 +89,23 @@ class _OtpPageState extends State<OtpPage> {
       return;
     }
 
-    // ✅ Navigation vers Dashboard avec les vraies données utilisateur
+    // ✅ Création du UserModel complet
+    final user = UserModel(
+      id: 0,
+      prenom: widget.prenom,
+      nom: widget.nom,
+      email: widget.email ?? '', // vide si null
+      telephone: widget.telephone,
+      pin: '', // vide par défaut
+      solde: 0.0,
+    );
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => DashboardPage(
-          currentUser: User(
-            prenom:    widget.prenom,
-            nom:       widget.nom,
-            telephone: widget.telephone,
-            solde:     0, // TODO: récupérer depuis l'API
-          ),
-        ),
+        builder: (_) => DashboardPage(currentUser: user),
       ),
-      (_) => false,
+          (_) => false,
     );
   }
 
@@ -120,7 +121,6 @@ class _OtpPageState extends State<OtpPage> {
             children: [
               Image.asset(ImagesAssets.terangaPay),
               const SizedBox(height: 28),
-
               const Text(
                 'Entrez le code envoyé',
                 style: TextStyle(
@@ -130,11 +130,9 @@ class _OtpPageState extends State<OtpPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              // ✅ Affiche le numéro réel
               Text(
                 'Un code a été envoyé au +221 ${widget.telephone}',
-                style: const TextStyle(
-                    fontSize: 13, color: AppColors.sub, height: 1.5),
+                style: const TextStyle(fontSize: 13, color: AppColors.sub, height: 1.5),
               ),
               const SizedBox(height: 36),
 
@@ -149,9 +147,7 @@ class _OtpPageState extends State<OtpPage> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       gradient: isFilled ? AppTheme.primaryGradient : null,
-                      border: isFilled
-                          ? null
-                          : Border.all(color: AppColors.border, width: 1.5),
+                      border: isFilled ? null : Border.all(color: AppColors.border, width: 1.5),
                     ),
                     child: Container(
                       margin: isFilled ? const EdgeInsets.all(1.5) : EdgeInsets.zero,
@@ -173,9 +169,7 @@ class _OtpPageState extends State<OtpPage> {
                         ),
                         decoration: const InputDecoration(
                           counterText: '',
-                          border:             InputBorder.none,
-                          enabledBorder:      InputBorder.none,
-                          focusedBorder:      InputBorder.none,
+                          border: InputBorder.none,
                         ),
                         onChanged: (val) => _onChanged(val, i),
                       ),
@@ -185,39 +179,35 @@ class _OtpPageState extends State<OtpPage> {
               ),
 
               const SizedBox(height: 32),
-
               PrimaryButton(label: 'Confirmer', onTap: _confirm),
-
               const SizedBox(height: 16),
 
               Center(
                 child: _canResend
                     ? GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _canResend = false;
-                            _resendSeconds = 60;
-                          });
-                          _startResendTimer();
-                        },
-                        child: ShaderMask(
-                          shaderCallback: (b) =>
-                              AppTheme.primaryGradient.createShader(b),
-                          child: const Text(
-                            'Renvoyer le code',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      )
-                    : Text(
-                        'Renvoyer dans $_resendSeconds s',
-                        style: const TextStyle(
-                            fontSize: 13, color: AppColors.sub),
+                  onTap: () {
+                    setState(() {
+                      _canResend = false;
+                      _resendSeconds = 60;
+                    });
+                    _startResendTimer();
+                  },
+                  child: ShaderMask(
+                    shaderCallback: (b) => AppTheme.primaryGradient.createShader(b),
+                    child: const Text(
+                      'Renvoyer le code',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
+                    ),
+                  ),
+                )
+                    : Text(
+                  'Renvoyer dans $_resendSeconds s',
+                  style: const TextStyle(fontSize: 13, color: AppColors.sub),
+                ),
               ),
             ],
           ),

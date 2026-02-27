@@ -5,3 +5,5 @@ const String otp = '/otp_page';
 const String dashboard = '/dashboard_page';
 const String phoneVerifyPage = '/phone_verify_page';
 const String registerPage = '/register_page';
+const String transfertPage = '/transfert_page';
+const String profilePage = '/profile_page';

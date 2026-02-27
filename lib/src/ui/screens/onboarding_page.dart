@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:terangapay/src/ui/screens/login_page.dart';
 import 'package:terangapay/src/ui/widgets/primary_button.dart';
 import '../../../app_theme.dart';
 import 'package:terangapay/src/utiles/myAssets/image_assets.dart';
@@ -47,7 +48,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const RegisterPage()),
+        MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     }
   }

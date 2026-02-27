@@ -3,6 +3,7 @@
     "id": 1,
     "nom": "Gueye",
     "prenom": "Baye Elimane",
+    "email": "gueyeeli@gmail.com",
     "telephone": "771234567",
     "pin": "1234",
     "solde": 150000
@@ -11,14 +12,16 @@
     "id": 2,
     "nom": "Diop",
     "prenom": "Aminata",
+    "email": "amina@gmail.com",
     "telephone": "781112233",
     "pin": "0000",
     "solde": 85000
   },
   {
-    "id": 2,
+    "id": 3,
     "nom": "Dia",
     "prenom": "Coumba Matel",
+    "email": "cmd@gmail.com",
     "telephone": "773438120",
     "pin": "1726",
     "solde": 500000
