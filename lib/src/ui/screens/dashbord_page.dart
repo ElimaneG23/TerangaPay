@@ -16,6 +16,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  bool _isBalanceVisible = true;
   String formatAmount(double amount) => '${amount.toStringAsFixed(0)} FCFA';
 
   @override
@@ -103,13 +104,36 @@ class _DashboardPageState extends State<DashboardPage> {
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      formatAmount(widget.currentUser.solde),
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          _isBalanceVisible
+                              ? formatAmount(widget.currentUser.solde)
+                              : '••••••',
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              _isBalanceVisible = !_isBalanceVisible;
+                            });
+                          },
+                          icon: Icon(
+                            _isBalanceVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: AppColors.white,
+                            size: 22,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     Container(width: double.infinity, height: 1, color: Colors.white24),
