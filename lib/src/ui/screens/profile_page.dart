@@ -181,12 +181,15 @@ class ProfilePage extends StatelessWidget {
         ),
         content: const Text(
           'Voulez-vous vraiment vous déconnecter ?',
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(color: Colors.black87, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pushAndRemoveUntil(
@@ -195,11 +198,16 @@ class ProfilePage extends StatelessWidget {
               (_) => false,
             ),
             style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Déconnexion'),
+            child: const Text(
+              'Déconnexion',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
