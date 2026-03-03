@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:terangapay/src/ui/widgets/primary_button.dart';
-import 'package:terangapay/src/utiles/form_validators.dart';
+import 'package:terangapay/src/ui/widgets/form_validators.dart';
 import '../../../app_theme.dart';
 import '../../utiles/myAssets/image_assets.dart';
 import '../widgets/primary_textfield.dart';

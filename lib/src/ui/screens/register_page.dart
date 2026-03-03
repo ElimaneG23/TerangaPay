@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:terangapay/src/ui/widgets/form_validators.dart';
 import 'package:terangapay/src/ui/widgets/primary_button.dart';
-import 'package:terangapay/src/utiles/form_validators.dart';
 import 'package:terangapay/src/utiles/myAssets/image_assets.dart';
+
 import '../../../app_theme.dart';
 import '../widgets/primary_textfield.dart';
 import 'phone_verify_page.dart';
