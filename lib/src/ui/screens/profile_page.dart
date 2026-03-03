@@ -6,10 +6,7 @@ import 'login_page.dart';
 class ProfilePage extends StatelessWidget {
   final UserModel currentUser;
 
-  const ProfilePage({
-    super.key,
-    required this.currentUser,
-  });
+  const ProfilePage({super.key, required this.currentUser});
 
   String get initials =>
       '${currentUser.prenom[0]}${currentUser.nom[0]}'.toUpperCase();
@@ -36,16 +33,12 @@ class ProfilePage extends StatelessWidget {
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(
-            color: AppColors.border,
-            height: 1,
-          ),
+          child: Container(color: AppColors.border, height: 1),
         ),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-
             /// ───────── HEADER ─────────
             Container(
               width: double.infinity,
@@ -140,18 +133,21 @@ class ProfilePage extends StatelessWidget {
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                      vertical: 14, horizontal: 16),
+                    vertical: 14,
+                    horizontal: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.redLight,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.red.withOpacity(0.3),
-                    ),
+                    border: Border.all(color: AppColors.red.withOpacity(0.3)),
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.logout_rounded,
-                          color: AppColors.red, size: 20),
+                      Icon(
+                        Icons.logout_rounded,
+                        color: AppColors.red,
+                        size: 20,
+                      ),
                       SizedBox(width: 12),
                       Text(
                         'Se déconnecter',
@@ -178,41 +174,27 @@ class ProfilePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Déconnexion',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
         ),
         content: const Text(
           'Voulez-vous vraiment vous déconnecter ?',
-          style: TextStyle(
-            color: AppColors.sub,
-            fontSize: 14,
-          ),
+          style: TextStyle(fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Annuler',
-              style: TextStyle(color: AppColors.sub),
-            ),
+            child: const Text('Annuler'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(
-                builder: (_) => const LoginPage(),
-              ),
-                  (_) => false,
+              MaterialPageRoute(builder: (_) => const LoginPage()),
+              (_) => false,
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.red,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -254,11 +236,7 @@ class _MenuItem extends StatelessWidget {
             color: AppColors.greenLight,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.greenDark,
-            size: 18,
-          ),
+          child: Icon(icon, color: AppColors.greenDark, size: 18),
         ),
         title: Text(
           label,
@@ -273,8 +251,7 @@ class _MenuItem extends StatelessWidget {
           color: AppColors.sub,
           size: 20,
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
     );
   }

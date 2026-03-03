@@ -58,7 +58,8 @@ class _TransfertPageState extends State<TransfertPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final amount = int.tryParse(_amountController.text.replaceAll(' ', '')) ?? 0;
+    final amount =
+        int.tryParse(_amountController.text.replaceAll(' ', '')) ?? 0;
 
     if (amount > _solde) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -115,11 +116,23 @@ class _TransfertPageState extends State<TransfertPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        leading: const BackButton(color: AppColors.white),
-        title: const Text('Transfert', style: TextStyle(color: AppColors.white)),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+          ),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: const BackButton(color: Colors.white),
+            title: const Text(
+              'Transfert',
+              style: TextStyle(color: Colors.white),
+            ),
+            centerTitle: true,
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -128,8 +141,14 @@ class _TransfertPageState extends State<TransfertPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Solde actuel : ${formatAmount(_solde.toInt())} FCFA',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary)),
+              Text(
+                'Solde actuel : ${formatAmount(_solde.toInt())} FCFA',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
               const SizedBox(height: 20),
               const _SectionLabel('Contacts récents'),
               const SizedBox(height: 10),
@@ -141,6 +160,7 @@ class _TransfertPageState extends State<TransfertPage> {
                   itemBuilder: (_, i) {
                     final c = _recentContacts[i];
                     final selected = _selectedContact == c['name'];
+
                     return GestureDetector(
                       onTap: () => _selectContact(c),
                       child: Container(
@@ -151,14 +171,19 @@ class _TransfertPageState extends State<TransfertPage> {
                               width: 52,
                               height: 52,
                               decoration: BoxDecoration(
-                                color: selected ? AppColors.primary : AppColors.primaryLight,
+                                gradient: selected
+                                    ? AppTheme.primaryGradient
+                                    : null,
+                                color: selected
+                                    ? null
+                                    : AppColors.primaryLight,
                                 shape: BoxShape.circle,
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 c['initials']!,
                                 style: TextStyle(
-                                  color: selected ? Colors.white : AppColors.primary,
+                                  color: Colors.white,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
@@ -167,7 +192,9 @@ class _TransfertPageState extends State<TransfertPage> {
                             const SizedBox(height: 6),
                             Text(
                               c['name']!.split(' ').first,
-                              style: const TextStyle(fontSize: 11, color: AppColors.text),
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.text),
                             ),
                           ],
                         ),
@@ -176,6 +203,7 @@ class _TransfertPageState extends State<TransfertPage> {
                   },
                 ),
               ),
+
               const SizedBox(height: 20),
               const _SectionLabel('Numéro de téléphone'),
               const SizedBox(height: 8),
@@ -199,16 +227,29 @@ class _TransfertPageState extends State<TransfertPage> {
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                child: InkWell(
+                  onTap: _isLoading ? null : _submit,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    decoration: const BoxDecoration(
+                      gradient: AppTheme.primaryGradient,
+                      borderRadius:
+                      BorderRadius.all(Radius.circular(14)),
+                    ),
+                    alignment: Alignment.center,
+                    child: _isLoading
+                        ? const CircularProgressIndicator(
+                        color: Colors.white)
+                        : const Text(
+                      'ENVOYER',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('ENVOYER', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
                 ),
               ),
             ],
@@ -221,13 +262,18 @@ class _TransfertPageState extends State<TransfertPage> {
 
 class _SectionLabel extends StatelessWidget {
   final String text;
+
   const _SectionLabel(this.text);
 
   @override
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text),
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: AppColors.text,
+      ),
     );
   }
 }
@@ -283,7 +329,11 @@ class _SuccessSheet extends StatelessWidget {
   final int amount;
   final VoidCallback onClose;
 
-  const _SuccessSheet({required this.name, required this.amount, required this.onClose});
+  const _SuccessSheet({
+    required this.name,
+    required this.amount,
+    required this.onClose,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -298,24 +348,43 @@ class _SuccessSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.primaryLight.withOpacity(0.3), borderRadius: BorderRadius.circular(4))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
           const SizedBox(height: 28),
           Container(
             width: 72,
             height: 72,
-            decoration: BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+            ),
             child: Icon(Icons.check_rounded, color: primary, size: 38),
           ),
           const SizedBox(height: 16),
-          const Text('Transfert réussi !', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          Text('${formatAmount(amount)} envoyé à $name', textAlign: TextAlign.center),
+          const Text(
+            'Transfert réussi !',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          Text(
+            '${formatAmount(amount)} envoyé à $name',
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 28),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: onClose,
               style: ElevatedButton.styleFrom(backgroundColor: primary),
-              child: const Text('TERMINER', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'TERMINER',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ),
         ],
