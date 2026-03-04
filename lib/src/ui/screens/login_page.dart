@@ -106,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 30),
 
               /// Téléphone
               PrimaryTextField(
@@ -117,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                 gradient: AppTheme.primaryGradient,
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 25),
 
               /// PIN
               PrimaryTextField(
