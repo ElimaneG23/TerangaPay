@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:terangapay/models/user_model.dart';
 import 'package:terangapay/models/transaction_model.dart';
+import 'package:terangapay/src/utiles/myAssets/image_assets.dart';
 import '../../../app_theme.dart';
 import 'history_page.dart' hide AppColors, TransactionType, Transaction, sampleTransactions;
 import 'profile_page.dart';
@@ -36,7 +37,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                 child: Row(
                   children: [
-                    const Icon(Icons.menu, color: AppColors.sub, size: 24),
+                    SizedBox(
+                      height: 40, // hauteur du logo
+                      child: Image.asset(
+                        ImagesAssets.terangaPay,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                     const Spacer(),
                     GestureDetector(
                       onTap: () => Navigator.push(
