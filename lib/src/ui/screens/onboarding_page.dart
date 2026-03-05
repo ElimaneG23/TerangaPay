@@ -147,7 +147,7 @@ class _SlidePage extends StatelessWidget {
                   ),
                   child: Center(
                     child: Image.asset(
-                      data.asset!, // ton chemin d'icône depuis IconAssets
+                      data.asset, // ton chemin d'icône depuis IconAssets
                       width: 500,
                       height: 500,
                     ),

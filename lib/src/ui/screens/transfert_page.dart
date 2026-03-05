@@ -22,13 +22,19 @@ class _TransfertPageState extends State<TransfertPage> {
   bool _isLoading = false;
   String? _selectedContact;
 
-  // Contacts récents (simulés)
   final List<Map<String, String>> _recentContacts = [
     {'name': 'Abdoulaye B.', 'phone': '+221 77 123 45 67', 'initials': 'AB'},
     {'name': 'Fatou Diallo',  'phone': '+221 76 987 65 43', 'initials': 'FD'},
     {'name': 'Moussa Sy',     'phone': '+221 78 111 22 33', 'initials': 'MS'},
     {'name': 'Aïssatou N.',   'phone': '+221 70 444 55 66', 'initials': 'AN'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // ✅ Mise à jour du récapitulatif en temps réel
+    _amountController.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -45,6 +51,10 @@ class _TransfertPageState extends State<TransfertPage> {
     });
   }
 
+  // ✅ Montant parsé proprement
+  int get _parsedAmount =>
+      int.tryParse(_amountController.text.replaceAll(' ', '')) ?? 0;
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -54,21 +64,19 @@ class _TransfertPageState extends State<TransfertPage> {
 
     if (!mounted) return;
 
-    // Ajouter la transaction à la liste
-    final amount = int.tryParse(_amountController.text.replaceAll(' ', '')) ?? 0;
     sampleTransactions.insert(
       0,
       Transaction(
         name: _selectedContact ?? _phoneController.text,
         reference: 'TERANGA-${DateTime.now().millisecondsSinceEpoch}',
-        amount: amount,
+        amount: _parsedAmount,
         type: TransactionType.send,
         status: 'completed',
         date: DateTime.now(),
       ),
     );
 
-    _showSuccessSheet(amount);
+    _showSuccessSheet(_parsedAmount);
   }
 
   void _showSuccessSheet(int amount) {
@@ -80,8 +88,8 @@ class _TransfertPageState extends State<TransfertPage> {
         name: _selectedContact ?? _phoneController.text,
         amount: amount,
         onClose: () {
-          Navigator.pop(context); // ferme le sheet
-          Navigator.pop(context); // retour au dashboard
+          Navigator.pop(context);
+          Navigator.pop(context);
         },
       ),
     );
@@ -89,6 +97,8 @@ class _TransfertPageState extends State<TransfertPage> {
 
   @override
   Widget build(BuildContext context) {
+    final hasAmount = _parsedAmount > 0;
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -100,7 +110,10 @@ class _TransfertPageState extends State<TransfertPage> {
         ),
         title: const Text(
           'Transfert',
-          style: TextStyle(color: AppColors.greenDark, fontSize: 18, fontWeight: FontWeight.w700),
+          style: TextStyle(
+              color: AppColors.greenDark,
+              fontSize: 18,
+              fontWeight: FontWeight.w700),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -135,17 +148,22 @@ class _TransfertPageState extends State<TransfertPage> {
                             Container(
                               width: 52, height: 52,
                               decoration: BoxDecoration(
-                                color: selected ? AppColors.green : AppColors.greenLight,
+                                color: selected
+                                    ? AppColors.green
+                                    : AppColors.greenLight,
                                 shape: BoxShape.circle,
                                 border: selected
-                                    ? Border.all(color: AppColors.greenDark, width: 2)
+                                    ? Border.all(
+                                        color: AppColors.greenDark, width: 2)
                                     : null,
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 c['initials']!,
                                 style: TextStyle(
-                                  color: selected ? Colors.white : AppColors.greenDark,
+                                  color: selected
+                                      ? Colors.white
+                                      : AppColors.greenDark,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
@@ -154,7 +172,10 @@ class _TransfertPageState extends State<TransfertPage> {
                             const SizedBox(height: 6),
                             Text(
                               c['name']!.split(' ').first,
-                              style: const TextStyle(fontSize: 11, color: AppColors.text, fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.text,
+                                  fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -176,12 +197,14 @@ class _TransfertPageState extends State<TransfertPage> {
                 keyboardType: TextInputType.phone,
                 prefixWidget: Container(
                   margin: const EdgeInsets.only(left: 12, right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.greenLight,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('🇸🇳', style: TextStyle(fontSize: 16)),
+                  child: const Text('🇸🇳',
+                      style: TextStyle(fontSize: 16)),
                 ),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Veuillez entrer un numéro';
@@ -212,22 +235,39 @@ class _TransfertPageState extends State<TransfertPage> {
 
               const SizedBox(height: 8),
 
-              // Raccourcis montants
+              // ── Raccourcis montants ──
               Wrap(
                 spacing: 8,
                 children: [1000, 5000, 10000, 25000].map((v) {
+                  final isSelected = _parsedAmount == v;
                   return GestureDetector(
-                    onTap: () => setState(() => _amountController.text = '$v'),
+                    onTap: () =>
+                        setState(() => _amountController.text = '$v'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 7),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        // ✅ Raccourci sélectionné mis en surbrillance
+                        color: isSelected
+                            ? AppColors.greenLight
+                            : AppColors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.green
+                              : AppColors.border,
+                          width: isSelected ? 1.5 : 1,
+                        ),
                       ),
                       child: Text(
                         formatAmount(v),
-                        style: const TextStyle(fontSize: 12, color: AppColors.text, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSelected
+                              ? AppColors.greenDark
+                              : AppColors.text,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   );
@@ -248,23 +288,30 @@ class _TransfertPageState extends State<TransfertPage> {
 
               const SizedBox(height: 24),
 
-              // ── Récapitulatif frais ──
-              Container(
+              // ── Récapitulatif ── ✅ mis à jour en temps réel
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(
+                    color: hasAmount ? AppColors.green : AppColors.border,
+                    width: hasAmount ? 1.5 : 1,
+                  ),
                 ),
                 child: Column(
                   children: [
-                    _RecapRow(label: 'Montant', value: _amountController.text.isEmpty ? '—' : formatAmount(int.tryParse(_amountController.text) ?? 0)),
+                    _RecapRow(
+                      label: 'Montant',
+                      value: hasAmount ? formatAmount(_parsedAmount) : '—',
+                    ),
                     const SizedBox(height: 8),
-                    const _RecapRow(label: 'Frais', value: '0 FCFA'),
+                    const _RecapRow(label: 'Frais', value: '1 FCFA'),
                     const Divider(color: AppColors.border, height: 16),
                     _RecapRow(
                       label: 'Total',
-                      value: _amountController.text.isEmpty ? '—' : formatAmount(int.tryParse(_amountController.text) ?? 0),
+                      value: hasAmount ? formatAmount(_parsedAmount) : '—',
                       bold: true,
                     ),
                   ],
@@ -283,18 +330,23 @@ class _TransfertPageState extends State<TransfertPage> {
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: AppColors.greenLight,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     elevation: 6,
                     shadowColor: AppColors.green.withOpacity(0.4),
                   ),
                   child: _isLoading
                       ? const SizedBox(
                           width: 22, height: 22,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2.5),
                         )
                       : const Text(
                           'ENVOYER',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 2),
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 2),
                         ),
                 ),
               ),
@@ -318,8 +370,10 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        fontSize: 13, fontWeight: FontWeight.w700,
-        color: AppColors.text, letterSpacing: 0.2,
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: AppColors.text,
+        letterSpacing: 0.2,
       ),
     );
   }
@@ -361,17 +415,34 @@ class _InputField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: AppColors.sub, fontSize: 13),
-        prefixIcon: prefixWidget ?? Icon(icon, color: AppColors.sub, size: 20),
+        prefixIcon:
+            prefixWidget ?? Icon(icon, color: AppColors.sub, size: 20),
         suffixText: suffixText,
-        suffixStyle: const TextStyle(color: AppColors.sub, fontSize: 13, fontWeight: FontWeight.w600),
+        suffixStyle: const TextStyle(
+            color: AppColors.sub,
+            fontSize: 13,
+            fontWeight: FontWeight.w600),
         filled: true,
         fillColor: AppColors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.green, width: 1.8)),
-        errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.red)),
-        focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.red, width: 1.8)),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                const BorderSide(color: AppColors.green, width: 1.8)),
+        errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.red)),
+        focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                const BorderSide(color: AppColors.red, width: 1.8)),
       ),
     );
   }
@@ -382,14 +453,17 @@ class _RecapRow extends StatelessWidget {
   final String label, value;
   final bool bold;
 
-  const _RecapRow({required this.label, required this.value, this.bold = false});
+  const _RecapRow(
+      {required this.label, required this.value, this.bold = false});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 13, color: AppColors.sub)),
+        Text(label,
+            style:
+                const TextStyle(fontSize: 13, color: AppColors.sub)),
         Text(
           value,
           style: TextStyle(
@@ -409,7 +483,10 @@ class _SuccessSheet extends StatelessWidget {
   final int amount;
   final VoidCallback onClose;
 
-  const _SuccessSheet({required this.name, required this.amount, required this.onClose});
+  const _SuccessSheet(
+      {required this.name,
+      required this.amount,
+      required this.onClose});
 
   @override
   Widget build(BuildContext context) {
@@ -424,22 +501,30 @@ class _SuccessSheet extends StatelessWidget {
         children: [
           Container(
             width: 40, height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(4)),
           ),
           const SizedBox(height: 28),
           Container(
             width: 72, height: 72,
-            decoration: const BoxDecoration(color: AppColors.greenLight, shape: BoxShape.circle),
-            child: const Icon(Icons.check_rounded, color: AppColors.greenDark, size: 38),
+            decoration: const BoxDecoration(
+                color: AppColors.greenLight, shape: BoxShape.circle),
+            child: const Icon(Icons.check_rounded,
+                color: AppColors.greenDark, size: 38),
           ),
           const SizedBox(height: 16),
           const Text('Transfert réussi !',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text)),
           const SizedBox(height: 8),
           Text(
             '${formatAmount(amount)} envoyé à $name',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: AppColors.sub, height: 1.5),
+            style: const TextStyle(
+                fontSize: 13, color: AppColors.sub, height: 1.5),
           ),
           const SizedBox(height: 28),
           SizedBox(
@@ -450,9 +535,12 @@ class _SuccessSheet extends StatelessWidget {
                 backgroundColor: AppColors.green,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('TERMINER', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+              child: const Text('TERMINER',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w800, letterSpacing: 1.5)),
             ),
           ),
         ],
