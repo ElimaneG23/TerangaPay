@@ -65,7 +65,7 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     '${currentUser.prenom} ${currentUser.nom}',
                     style: const TextStyle(
@@ -148,7 +148,7 @@ class ProfilePage extends StatelessWidget {
                         color: AppColors.red,
                         size: 20,
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: 16),
                       Text(
                         'Se déconnecter',
                         style: TextStyle(

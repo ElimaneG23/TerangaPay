@@ -1,19 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../app_theme.dart';
 
-// ── Couleurs (remplace app_theme.dart si besoin) ─────────────────────────────
-class AppColors {
-  static const bg         = Color(0xFFF8F0E8);
-  static const white      = Colors.white;
-  static const border     = Color(0xFFE8DDD5);
-  static const text       = Color(0xFF2C1A0E);
-  static const sub        = Color(0xFF9E8880);
-  static const green      = Color(0xFF2ECC71);
-  static const greenDark  = Color(0xFF27AE60);
-  static const greenLight = Color(0xFFD5F5E3);
-  static const red        = Color(0xFFE74C3C);
-  static const redLight   = Color(0xFFFDE8E6);
-  static Color? get primary => green;
-}
+
+// ── Couleurs (remplace app_theme.dart si besoin) ───────────────────────────
 
 // ── Modèle Transaction ────────────────────────────────────────────────────────
 enum TransactionType { send, receive }
@@ -426,7 +415,7 @@ class _DetailSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B1F14),
+                backgroundColor: AppColors.primary,
                 foregroundColor: const Color(0xFFF5E6D0),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
