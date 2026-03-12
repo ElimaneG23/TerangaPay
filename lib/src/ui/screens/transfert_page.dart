@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:terangapay/models/user_model.dart';
 import 'package:terangapay/src/ui/screens/history_page.dart'
-    show Transaction, TransactionType, sampleTransactions, formatAmount;
+    show Transaction, TransactionType, addTransactionForUser, formatAmount;
 import '../../../app_theme.dart';
 
 class TransfertPage extends StatefulWidget {
@@ -19,7 +19,8 @@ class TransfertPage extends StatefulWidget {
   State<TransfertPage> createState() => _TransfertPageState();
 }
 
-class _TransfertPageState extends State<TransfertPage> {
+class _TransfertPageState extends State<TransfertPage>
+    with SingleTickerProviderStateMixin {
   final _phoneController = TextEditingController();
   final _amountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -27,6 +28,10 @@ class _TransfertPageState extends State<TransfertPage> {
   bool _isLoading = false;
   String? _selectedContact;
   late double _solde;
+
+  late AnimationController _animController;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
 
   final List<Map<String, String>> _recentContacts = [
     {'name': 'Abdoulaye B.', 'phone': '+221 77 123 45 67', 'initials': 'AB'},
@@ -39,12 +44,23 @@ class _TransfertPageState extends State<TransfertPage> {
   void initState() {
     super.initState();
     _solde = widget.currentUser.solde;
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _animController.forward();
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _amountController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
@@ -63,10 +79,19 @@ class _TransfertPageState extends State<TransfertPage> {
 
     if (amount > _solde) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Solde insuffisant'),
-          backgroundColor: Colors.redAccent,
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text('Solde insuffisant'),
+            ],
+          ),
+          backgroundColor: AppColors.red,
           behavior: SnackBarBehavior.floating,
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
         ),
       );
       return;
@@ -83,8 +108,8 @@ class _TransfertPageState extends State<TransfertPage> {
       widget.currentUser.solde = _solde;
     });
 
-    sampleTransactions.insert(
-      0,
+    addTransactionForUser(
+      widget.currentUser.telephone,
       Transaction(
         name: _selectedContact ?? _phoneController.text,
         reference: 'TERANGA-${DateTime.now().millisecondsSinceEpoch}',
@@ -115,9 +140,9 @@ class _TransfertPageState extends State<TransfertPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.bg,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
+        preferredSize: const Size.fromHeight(64),
         child: Container(
           decoration: const BoxDecoration(
             gradient: AppTheme.primaryGradient,
@@ -125,134 +150,280 @@ class _TransfertPageState extends State<TransfertPage> {
           child: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            leading: const BackButton(color: Colors.white),
+            leading: Padding(
+              padding: const EdgeInsets.all(10),
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.18),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ),
             title: const Text(
               'Transfert',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             centerTitle: true,
           ),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Solde actuel : ${formatAmount(_solde.toInt())} FCFA',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel('Contacts récents'),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 88,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _recentContacts.length,
-                  itemBuilder: (_, i) {
-                    final c = _recentContacts[i];
-                    final selected = _selectedContact == c['name'];
-
-                    return GestureDetector(
-                      onTap: () => _selectContact(c),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 12),
-                        child: Column(
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: SlideTransition(
+          position: _slideAnim,
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// ── Carte solde disponible ──
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: AppColors.greenLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.account_balance_wallet_rounded,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 52,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                gradient: selected
-                                    ? AppTheme.primaryGradient
-                                    : null,
-                                color: selected
-                                    ? null
-                                    : AppColors.primaryLight,
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                c['initials']!,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                ),
+                            Text(
+                              'Solde disponible',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 2),
                             Text(
-                              c['name']!.split(' ').first,
+                              '${formatAmount(_solde.toInt())} FCFA',
                               style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.text),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  /// ── Contacts récents ──
+                  const _SectionLabel('Contacts récents'),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 90,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _recentContacts.length,
+                      itemBuilder: (_, i) {
+                        final c = _recentContacts[i];
+                        final selected = _selectedContact == c['name'];
+
+                        return GestureDetector(
+                          onTap: () => _selectContact(c),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.only(right: 14),
+                            child: Column(
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  width: 54,
+                                  height: 54,
+                                  decoration: BoxDecoration(
+                                    gradient: selected
+                                        ? AppTheme.primaryGradient
+                                        : null,
+                                    color: selected
+                                        ? null
+                                        : Colors.white,
+                                    shape: BoxShape.circle,
+                                    border: selected
+                                        ? null
+                                        : Border.all(
+                                      color: AppColors.border,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: selected
+                                        ? [
+                                      BoxShadow(
+                                        color: AppColors.primary
+                                            .withOpacity(0.35),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      )
+                                    ]
+                                        : [
+                                      BoxShadow(
+                                        color: Colors.black
+                                            .withOpacity(0.05),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      )
+                                    ],
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    c['initials']!,
+                                    style: TextStyle(
+                                      color: selected
+                                          ? Colors.white
+                                          : AppColors.text,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  c['name']!.split(' ').first,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: selected
+                                        ? AppColors.primary
+                                        : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  /// ── Champs de saisie ──
+                  const _SectionLabel('Numéro de téléphone'),
+                  const SizedBox(height: 8),
+                  _InputField(
+                    controller: _phoneController,
+                    hint: '+221 XX XXX XX XX',
+                    icon: Icons.phone_rounded,
+                    focusedColor: AppColors.primary,
+                  ),
+                  const SizedBox(height: 16),
+                  const _SectionLabel('Montant (FCFA)'),
+                  const SizedBox(height: 8),
+                  _InputField(
+                    controller: _amountController,
+                    hint: '0',
+                    icon: Icons.payments_rounded,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    focusedColor: AppColors.primary,
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  /// ── Bouton Envoyer ──
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: GestureDetector(
+                      onTap: _isLoading ? null : _submit,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          gradient: _isLoading
+                              ? null
+                              : AppTheme.primaryGradient,
+                          color: _isLoading ? Colors.grey.shade300 : null,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: _isLoading
+                              ? []
+                              : [
+                            BoxShadow(
+                              color:
+                              AppColors.primary.withOpacity(0.38),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: _isLoading
+                            ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                            : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.send_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'ENVOYER',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 20),
-              const _SectionLabel('Numéro de téléphone'),
-              const SizedBox(height: 8),
-              _InputField(
-                controller: _phoneController,
-                hint: '+221 XX XXX XX XX',
-                icon: Icons.phone_outlined,
-                focusedColor: AppColors.primary,
-              ),
-              const SizedBox(height: 16),
-              const _SectionLabel('Montant (FCFA)'),
-              const SizedBox(height: 8),
-              _InputField(
-                controller: _amountController,
-                hint: '0',
-                icon: Icons.payments_outlined,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                focusedColor: AppColors.primary,
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: InkWell(
-                  onTap: _isLoading ? null : _submit,
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: const BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
-                      borderRadius:
-                      BorderRadius.all(Radius.circular(14)),
-                    ),
-                    alignment: Alignment.center,
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                        color: Colors.white)
-                        : const Text(
-                      'ENVOYER',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
                     ),
                   ),
-                ),
+
+                  const SizedBox(height: 16),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -260,6 +431,7 @@ class _TransfertPageState extends State<TransfertPage> {
   }
 }
 
+/// ───────── SECTION LABEL ─────────
 class _SectionLabel extends StatelessWidget {
   final String text;
 
@@ -273,11 +445,13 @@ class _SectionLabel extends StatelessWidget {
         fontSize: 13,
         fontWeight: FontWeight.w700,
         color: AppColors.text,
+        letterSpacing: 0.2,
       ),
     );
   }
 }
 
+/// ───────── INPUT FIELD ─────────
 class _InputField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
@@ -306,24 +480,44 @@ class _InputField extends StatelessWidget {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,
-      style: const TextStyle(color: AppColors.text),
+      style: const TextStyle(
+        color: AppColors.text,
+        fontWeight: FontWeight.w600,
+        fontSize: 14,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.sub),
-        prefixIcon: Icon(icon, color: primary),
+        hintStyle: TextStyle(
+          color: Colors.grey.shade400,
+          fontWeight: FontWeight.w400,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: Icon(icon, color: primary, size: 20),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: primary, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.border),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.red, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.red, width: 2),
+        ),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
 }
 
+/// ───────── SUCCESS SHEET ─────────
 class _SuccessSheet extends StatelessWidget {
   final String name;
   final int amount;
@@ -337,53 +531,102 @@ class _SuccessSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = AppColors.primary;
-
     return Container(
       decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Handle
           Container(
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.3),
+              color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 32),
+
+          // Icône succès
           Container(
-            width: 72,
-            height: 72,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
+              gradient: AppTheme.primaryGradient,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.35),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            child: Icon(Icons.check_rounded, color: primary, size: 38),
+            child: const Icon(
+              Icons.check_rounded,
+              color: Colors.white,
+              size: 40,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+
           const Text(
             'Transfert réussi !',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+            ),
           ),
+          const SizedBox(height: 8),
           Text(
-            '${formatAmount(amount)} envoyé à $name',
+            '${formatAmount(amount)} FCFA envoyé à $name',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          const SizedBox(height: 28),
+
+          const SizedBox(height: 32),
+
+          // Divider
+          Container(height: 1, color:  AppColors.border),
+          const SizedBox(height: 24),
+
+          // Bouton
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onClose,
-              style: ElevatedButton.styleFrom(backgroundColor: primary),
-              child: const Text(
-                'TERMINER',
-                style: TextStyle(color: Colors.white),
+            height: 52,
+            child: GestureDetector(
+              onTap: onClose,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'TERMINER',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.8,
+                  ),
+                ),
               ),
             ),
           ),

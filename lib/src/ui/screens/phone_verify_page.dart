@@ -43,10 +43,15 @@ class PhoneVerifyPage extends StatefulWidget {
   State<PhoneVerifyPage> createState() => _PhoneVerifyPageState();
 }
 
-class _PhoneVerifyPageState extends State<PhoneVerifyPage> {
+class _PhoneVerifyPageState extends State<PhoneVerifyPage>
+    with SingleTickerProviderStateMixin {
   Country _selectedCountry = kCountries.first;
   String _phone = '';
   final _controller = TextEditingController();
+
+  late AnimationController _animController;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
 
   String get _formattedPhone {
     final digits = _phone.replaceAll(' ', '');
@@ -59,8 +64,25 @@ class _PhoneVerifyPageState extends State<PhoneVerifyPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnim =
+        CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(
+      begin: const Offset(0, 0.06),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
+    _animController.forward();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
@@ -94,15 +116,21 @@ class _PhoneVerifyPageState extends State<PhoneVerifyPage> {
     if (_phone.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Veuillez entrer un numéro valide'),
-          backgroundColor: Colors.redAccent,
+          content: const Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text('Veuillez entrer un numéro valide'),
+            ],
+          ),
+          backgroundColor: AppColors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
         ),
       );
       return;
     }
-    // ✅ Toutes les données transmises à OtpPage
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -119,129 +147,424 @@ class _PhoneVerifyPageState extends State<PhoneVerifyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset(ImagesAssets.terangaPay),
-              const SizedBox(height: 28),
-              const Text('Entrez votre numéro\nde téléphone',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.text, height: 1.3)),
-              const SizedBox(height: 8),
-              const Text('Un code de vérification sera envoyé sur ce numéro.',
-                  style: TextStyle(fontSize: 13, color: AppColors.sub)),
-              const SizedBox(height: 28),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: _showCountryPicker,
-                    child: Container(
-                      height: 52,
-                      decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(12)),
-                      child: Container(
-                        margin: const EdgeInsets.all(1.5),
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(color: AppColors.greenLight, borderRadius: BorderRadius.circular(10)),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+      backgroundColor: AppColors.bg,
+      body: Stack(
+        children: [
+          // ── Blobs décoratifs ──
+          Positioned(
+            top: -60,
+            right: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withOpacity(0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 50,
+            right: 30,
+            child: Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryLight.withOpacity(0.1),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: FadeTransition(
+              opacity: _fadeAnim,
+              child: SlideTransition(
+                position: _slideAnim,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      // ── Header : back + logo ──
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: AppColors.text,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: Image.asset(
+                              ImagesAssets.terangaPay,
+                              height: 28,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 40),
+
+                      // ── Icône illustrative ──
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppColors.greenLight,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.2),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.phone_rounded,
+                          color: AppColors.primary,
+                          size: 26,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // ── Titre ──
+                      const Text(
+                        'Votre numéro\nde téléphone',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.text,
+                          height: 1.3,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Un code de vérification sera envoyé sur ce numéro.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.sub,
+                          height: 1.5,
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // ── Carte saisie ──
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_selectedCountry.flag, style: const TextStyle(fontSize: 20)),
-                            const SizedBox(width: 6),
-                            Text(_selectedCountry.dialCode,
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text)),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: AppColors.sub),
+                            const Text(
+                              'Numéro de téléphone',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.text,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ── Sélecteur pays ──
+                                GestureDetector(
+                                  onTap: _showCountryPicker,
+                                  child: Container(
+                                    height: 52,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.greenLight,
+                                      borderRadius:
+                                      BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppColors.border,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _selectedCountry.flag,
+                                          style: const TextStyle(fontSize: 20),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          _selectedCountry.dialCode,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.text,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          size: 18,
+                                          color: AppColors.sub,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                // ── Champ numéro ──
+                                Expanded(
+                                  child: PrimaryTextField(
+                                    controller: _controller,
+                                    hint: 'XX XXX XX XX',
+                                    keyboardType: TextInputType.phone,
+                                    gradient: AppTheme.primaryGradient,
+                                    onChanged: _onChanged,
+                                    validator: FormValidators.validateTelephone,
+                                    label: '',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // ── Numéro formaté preview ──
+                            if (_phone.isNotEmpty)
+                              AnimatedOpacity(
+                                opacity: _phone.isNotEmpty ? 1 : 0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.greenLight,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: AppColors.primary,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        '${_selectedCountry.dialCode} $_formattedPhone',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.greenDark,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
-                    ),
+
+                      const SizedBox(height: 28),
+
+                      PrimaryButton(label: 'Suivant', onTap: _goToOtp),
+                    ],
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: PrimaryTextField(
-                      controller: _controller,
-                      hint: 'XX XXX XX XX',
-                      keyboardType: TextInputType.phone,
-                      gradient: AppTheme.primaryGradient,
-                      onChanged: _onChanged,
-                      validator: FormValidators.validateTelephone,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 32),
-              PrimaryButton(label: 'Suivant', onTap: _goToOtp),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
+// ── Country Picker Sheet ──────────────────────────────────────────────────────
 class _CountryPickerSheet extends StatefulWidget {
   final Country selected;
   final void Function(Country) onSelect;
   const _CountryPickerSheet({required this.selected, required this.onSelect});
+
   @override
   State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
 }
 
 class _CountryPickerSheetState extends State<_CountryPickerSheet> {
   String _search = '';
+
   List<Country> get _filtered => kCountries
-      .where((c) => c.name.toLowerCase().contains(_search.toLowerCase()) ||
-          c.dialCode.contains(_search) || c.code.toLowerCase().contains(_search.toLowerCase()))
+      .where((c) =>
+  c.name.toLowerCase().contains(_search.toLowerCase()) ||
+      c.dialCode.contains(_search) ||
+      c.code.toLowerCase().contains(_search.toLowerCase()))
       .toList();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       child: Column(
         children: [
-          Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4,
-              decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(4))),
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
           const SizedBox(height: 16),
-          const Text('Sélectionner un pays',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
-          const SizedBox(height: 12),
+
+          // Titre
+          const Text(
+            'Sélectionner un pays',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Recherche
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.text,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 hintText: 'Rechercher un pays...',
                 hintStyle: const TextStyle(color: AppColors.sub, fontSize: 13),
-                prefixIcon: const Icon(Icons.search, color: AppColors.sub, size: 20),
-                filled: true, fillColor: AppColors.bg,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                prefixIcon:
+                const Icon(Icons.search_rounded, color: AppColors.sub, size: 20),
+                filled: true,
+                fillColor: AppColors.bg,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
           ),
+
           const SizedBox(height: 8),
+
+          // Liste pays
           Expanded(
             child: ListView.builder(
               itemCount: _filtered.length,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               itemBuilder: (_, i) {
                 final c = _filtered[i];
                 final isSelected = c.code == widget.selected.code;
-                return ListTile(
-                  onTap: () => widget.onSelect(c),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  tileColor: isSelected ? AppColors.greenLight : Colors.transparent,
-                  leading: Text(c.flag, style: const TextStyle(fontSize: 24)),
-                  title: Text(c.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.text)),
-                  trailing: Text(c.dialCode,
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                          color: isSelected ? AppColors.greenDark : AppColors.sub)),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.greenLight
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                    border: isSelected
+                        ? Border.all(
+                      color: AppColors.primary.withOpacity(0.3),
+                      width: 1.5,
+                    )
+                        : null,
+                  ),
+                  child: ListTile(
+                    onTap: () => widget.onSelect(c),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    leading: Text(
+                      c.flag,
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                    title: Text(
+                      c.name,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withOpacity(0.1)
+                            : AppColors.bg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        c.dialCode,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.sub,
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
